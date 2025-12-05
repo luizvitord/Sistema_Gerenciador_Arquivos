@@ -4,16 +4,14 @@ import java.util.List;
 public class FileSystemSimulator implements Serializable {
     private VirtualDirectory root;
     private VirtualDirectory currentDirectory;
-    private transient Journal journal; // Transient para não serializar o logger
+    private transient Journal journal;
 
     public FileSystemSimulator() {
-        // Inicializa o sistema com o diretório Root
         this.root = new VirtualDirectory("root", null);
         this.currentDirectory = root;
         this.journal = new Journal();
     }
 
-    // Necessário reinicializar o Journal após carregar de um save
     public void initJournal() {
         if (this.journal == null) this.journal = new Journal();
     }
@@ -25,130 +23,149 @@ public class FileSystemSimulator implements Serializable {
 
     // --- OPERAÇÕES ---
 
-    // 1. Criar Diretório (mkdir)
+    // 1. Criar Diretório (mkdir) - Já estava correto
     public boolean mkdir(String name) {
         journal.log("MKDIR", name, "START");
 
-        // Verificação: Já existe?
         if (currentDirectory.getChild(name) != null) {
             System.out.println("Erro: Já existe um arquivo ou diretório com este nome.");
             journal.log("MKDIR", name, "FAIL - EXISTS");
-            return false; // <--- Retorna Erro
+            return false;
         }
 
         VirtualDirectory newDir = new VirtualDirectory(name, currentDirectory);
         currentDirectory.addChild(newDir);
         journal.log("MKDIR", name, "SUCCESS");
-        return true; // <--- Retorna Sucesso
+        return true;
     }
 
-    // 2. Criar Arquivo Vazio (Atualizado com boolean)
+    // 2. Criar Arquivo (mkfile) - Já estava correto
     public boolean mkfile(String name) {
         journal.log("MKFILE", name, "START");
 
-        // Verificação: Já existe?
         if (currentDirectory.getChild(name) != null) {
             System.out.println("Erro: Nome já utilizado.");
             journal.log("MKFILE", name, "FAIL - EXISTS");
-            return false; // <--- Retorna Erro
+            return false;
         }
 
         VirtualFile newFile = new VirtualFile(name, currentDirectory, "");
         currentDirectory.addChild(newFile);
         journal.log("MKFILE", name, "SUCCESS - EMPTY");
-        return true; // <--- Retorna Sucesso
+        return true;
     }
 
-    // 3. Listar (ls)
+    // 3. Listar (ls) - Mantido void (apenas visualização)
     public void ls() {
         System.out.println("Conteúdo de " + getCurrentPath() + ":");
-        for (FileSystemNode node : currentDirectory.getChildren()) {
+        List<FileSystemNode> children = currentDirectory.getChildren();
+
+        if (children.isEmpty()) {
+            System.out.println("(Diretório vazio)");
+            return;
+        }
+
+        for (FileSystemNode node : children) {
             String type = (node instanceof VirtualDirectory) ? "[DIR] " : "[FILE]";
             System.out.println(type + " " + node.getName());
         }
     }
 
-    // 4. Mudar Diretório (cd)
-    public void cd(String name) {
+    // 4. Mudar Diretório (cd) - ALTERADO PARA BOOLEAN
+    public boolean cd(String name) {
+        // Caso especial: Voltar diretório
         if (name.equals("..")) {
             if (currentDirectory.getParent() != null) {
                 currentDirectory = currentDirectory.getParent();
+                return true; // Sucesso: mudou de diretório
+            } else {
+                System.out.println("Aviso: Já está no diretório raiz.");
+                return false; // Falha: não mudou nada
             }
-            return;
         }
 
+        // Navegar para frente
         FileSystemNode node = currentDirectory.getChild(name);
+
+        if (node == null) {
+            System.out.println("Erro: Diretório '" + name + "' não encontrado.");
+            return false;
+        }
+
         if (node instanceof VirtualDirectory) {
             currentDirectory = (VirtualDirectory) node;
+            return true;
         } else {
-            System.out.println("Erro: Diretório não encontrado.");
+            System.out.println("Erro: '" + name + "' é um arquivo, não um diretório.");
+            return false;
         }
     }
 
-    // 5. Remover (rm) - Funciona para arquivo e diretório
-    public void rm(String name) {
+    // 5. Remover (rm) - ALTERADO PARA BOOLEAN
+    public boolean rm(String name) {
         journal.log("DELETE", name, "START");
         FileSystemNode node = currentDirectory.getChild(name);
+
         if (node != null) {
             currentDirectory.removeChild(node);
             journal.log("DELETE", name, "SUCCESS");
+            System.out.println("Item '" + name + "' removido.");
+            return true;
         } else {
-            System.out.println("Erro: Arquivo não encontrado.");
+            System.out.println("Erro: Arquivo ou diretório não encontrado.");
             journal.log("DELETE", name, "FAIL - NOT FOUND");
+            return false;
         }
     }
 
-    // 6. Renomear
+    // 6. Renomear (rename) - Já estava correto
     public boolean rename(String oldName, String newName) {
         journal.log("RENAME", oldName + " -> " + newName, "START");
 
-        // 1. Verificação de colisão: Já existe algo com o novo nome?
         if (currentDirectory.getChild(newName) != null) {
-            System.out.println("Erro: Já existe um arquivo/diretório com o nome " + newName);
+            System.out.println("Erro: Já existe um item com o nome " + newName);
             journal.log("RENAME", newName, "FAIL - ALREADY EXISTS");
-            return false; // Retorna falso para indicar erro
+            return false;
         }
 
-        // 2. Busca o arquivo original
         FileSystemNode node = currentDirectory.getChild(oldName);
 
         if (node != null) {
             node.setName(newName);
             journal.log("RENAME", newName, "SUCCESS");
-            return true; // Retorna verdadeiro (Sucesso)
+            System.out.println("Renomeado com sucesso.");
+            return true;
         } else {
             System.out.println("Erro: Arquivo original não encontrado.");
             journal.log("RENAME", oldName, "FAIL - NOT FOUND");
-            return false; // Retorna falso (Erro)
+            return false;
         }
     }
 
-    // 7. Copiar (cp) - Implementação simples (Cópia rasa)
+    // 7. Copiar (cp) - Já estava correto
     public boolean cp(String sourceName, String destPath) {
         journal.log("COPY", sourceName + " -> " + destPath, "START");
 
         FileSystemNode sourceNode = currentDirectory.getChild(sourceName);
         if (sourceNode == null) {
             System.out.println("Erro: Arquivo de origem não encontrado.");
-            return false; // <--- MUDANÇA: Retorna erro
+            return false;
         }
 
-        // 1. Identificar o diretório de destino
         VirtualDirectory targetDir = resolveDirectory(destPath);
-
-        // AQUI É O PULO DO GATO
         if (targetDir == null) {
             System.out.println("Erro: Diretório de destino inválido.");
             journal.log("COPY", sourceName, "FAIL - INVALID TARGET");
-            return false; // <--- MUDANÇA: Avisa ao front que falhou
+            return false;
         }
 
-        // ... (resto do código de renomeação igual) ...
+        // Lógica de renomeação automática em caso de conflito (file.txt -> file1.txt)
         String originalName = sourceNode.getName();
         String finalName = originalName;
         int counter = 1;
         String namePart = originalName;
         String extPart = "";
+
         int dotIndex = originalName.lastIndexOf('.');
         if (dotIndex > 0) {
             namePart = originalName.substring(0, dotIndex);
@@ -160,22 +177,21 @@ public class FileSystemSimulator implements Serializable {
             counter++;
         }
 
-        // 4. Executar a cópia
         if (sourceNode instanceof VirtualFile) {
             VirtualFile originalFile = (VirtualFile) sourceNode;
             VirtualFile copy = new VirtualFile(finalName, targetDir, originalFile.getContent());
             targetDir.addChild(copy);
 
-            journal.log("COPY", finalName, "SUCCESS (Renamed from " + originalName + ")");
+            journal.log("COPY", finalName, "SUCCESS");
             System.out.println("Copiado com sucesso para: " + targetDir.getPath() + "/" + finalName);
-            return true; // <--- MUDANÇA: Retorna sucesso
+            return true;
         } else {
-            System.out.println("Erro na cópia de diretórios .");
-            return false; // <--- MUDANÇA: Retorna erro
+            System.out.println("Erro: Cópia de diretórios (recursiva) ainda não implementada.");
+            return false;
         }
     }
 
-    // --- PERSISTÊNCIA (Salvar o "Disco") ---
+    // --- PERSISTÊNCIA ---
     public void saveSystem() {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("virtual_disk.dat"))) {
             oos.writeObject(this);
@@ -191,16 +207,12 @@ public class FileSystemSimulator implements Serializable {
             fs.initJournal();
             return fs;
         } catch (IOException | ClassNotFoundException e) {
-            return new FileSystemSimulator(); // Retorna um novo se não existir
+            return new FileSystemSimulator();
         }
     }
+
     public List<FileSystemNode> getCurrentContent() {
         return currentDirectory.getChildren();
-    }
-
-    public boolean isDirectory(String name) {
-        FileSystemNode node = currentDirectory.getChild(name);
-        return node instanceof VirtualDirectory;
     }
 
     public VirtualDirectory resolveDirectory(String path) {
@@ -219,7 +231,7 @@ public class FileSystemSimulator implements Serializable {
                 if (child instanceof VirtualDirectory) {
                     target = (VirtualDirectory) child;
                 } else {
-                    return null; // Caminho inválido (não é diretório ou não existe)
+                    return null;
                 }
             }
         }
