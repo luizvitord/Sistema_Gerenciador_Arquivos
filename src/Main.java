@@ -28,32 +28,43 @@ public class Main {
                     if (arg1 != null) fs.mkdir(arg1);
                     else System.out.println("Uso: mkdir <nome>");
                     break;
+
                 case "mkfile":
-                    if (arg1 != null) fs.mkfile(arg1, arg2 != null ? arg2 : "");
-                    else System.out.println("Uso: mkfile <nome> [conteudo]");
+                    if (arg1 != null) {
+                        fs.mkfile(arg1);
+                        System.out.println("Arquivo criado: " + arg1);
+                    }
+                    else System.out.println("Uso: mkfile <nome>");
                     break;
+
                 case "ls":
                     fs.ls();
                     break;
+
                 case "cd":
                     if (arg1 != null) fs.cd(arg1);
                     else System.out.println("Uso: cd <nome> ou cd ..");
                     break;
+
                 case "rm":
                     if (arg1 != null) fs.rm(arg1);
                     else System.out.println("Uso: rm <nome>");
                     break;
-                case "mv": // Renomear
+
+                case "mv":
                     if (arg1 != null && arg2 != null) fs.rename(arg1, arg2);
                     else System.out.println("Uso: mv <nome_antigo> <nome_novo>");
                     break;
+
                 case "cp":
                     if (arg1 != null && arg2 != null) fs.cp(arg1, arg2);
                     else System.out.println("Uso: cp <origem> <destino>");
                     break;
+
                 case "save":
                     fs.saveSystem();
                     break;
+
                 default:
                     System.out.println("Comando desconhecido.");
             }
