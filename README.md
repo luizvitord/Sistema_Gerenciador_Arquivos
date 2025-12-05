@@ -81,7 +81,7 @@ Abra um terminal na pasta raiz do projeto (a pasta que contém a pasta src). Exe
 
 **Windows / Linux / macOS:**
 ```bash
-javac -d bin src/*.java
+javac -d bin -encoding UTF-8 src/*.java
 ```
 
 ### 3. Execução
