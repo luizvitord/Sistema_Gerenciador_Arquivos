@@ -21,9 +21,6 @@ public class FileSystemSimulator implements Serializable {
         return currentDirectory.getPath();
     }
 
-    // --- OPERAÇÕES ---
-
-    // 1. Criar Diretório (mkdir) - Já estava correto
     public boolean mkdir(String name) {
         journal.log("MKDIR", name, "START");
 
@@ -39,7 +36,6 @@ public class FileSystemSimulator implements Serializable {
         return true;
     }
 
-    // 2. Criar Arquivo (mkfile) - Já estava correto
     public boolean mkfile(String name) {
         journal.log("MKFILE", name, "START");
 
@@ -55,7 +51,6 @@ public class FileSystemSimulator implements Serializable {
         return true;
     }
 
-    // 3. Listar (ls) - Mantido void (apenas visualização)
     public void ls() {
         System.out.println("Conteúdo de " + getCurrentPath() + ":");
         List<FileSystemNode> children = currentDirectory.getChildren();
@@ -71,20 +66,18 @@ public class FileSystemSimulator implements Serializable {
         }
     }
 
-    // 4. Mudar Diretório (cd) - ALTERADO PARA BOOLEAN
     public boolean cd(String name) {
         // Caso especial: Voltar diretório
         if (name.equals("..")) {
             if (currentDirectory.getParent() != null) {
                 currentDirectory = currentDirectory.getParent();
-                return true; // Sucesso: mudou de diretório
+                return true;
             } else {
                 System.out.println("Aviso: Já está no diretório raiz.");
-                return false; // Falha: não mudou nada
+                return false;
             }
         }
 
-        // Navegar para frente
         FileSystemNode node = currentDirectory.getChild(name);
 
         if (node == null) {
@@ -101,7 +94,6 @@ public class FileSystemSimulator implements Serializable {
         }
     }
 
-    // 5. Remover (rm) - ALTERADO PARA BOOLEAN
     public boolean rm(String name) {
         journal.log("DELETE", name, "START");
         FileSystemNode node = currentDirectory.getChild(name);
@@ -118,7 +110,6 @@ public class FileSystemSimulator implements Serializable {
         }
     }
 
-    // 6. Renomear (rename) - Já estava correto
     public boolean rename(String oldName, String newName) {
         journal.log("RENAME", oldName + " -> " + newName, "START");
 
@@ -142,7 +133,6 @@ public class FileSystemSimulator implements Serializable {
         }
     }
 
-    // 7. Copiar (cp) - Já estava correto
     public boolean cp(String sourceName, String destPath) {
         journal.log("COPY", sourceName + " -> " + destPath, "START");
 
@@ -159,7 +149,6 @@ public class FileSystemSimulator implements Serializable {
             return false;
         }
 
-        // Lógica de renomeação automática em caso de conflito (file.txt -> file1.txt)
         String originalName = sourceNode.getName();
         String finalName = originalName;
         int counter = 1;
@@ -191,7 +180,6 @@ public class FileSystemSimulator implements Serializable {
         }
     }
 
-    // --- PERSISTÊNCIA ---
     public void saveSystem() {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("virtual_disk.dat"))) {
             oos.writeObject(this);

@@ -17,7 +17,7 @@ abstract class FileSystemNode implements Serializable{
 
     public String getPath() {
         if (parent == null) return "/" + name;
-        if (parent.getParent() == null) return "/" + name; // Caso pai seja root
+        if (parent.getParent() == null) return "/" + name;
         return parent.getPath() + "/" + name;
     }
 

@@ -19,7 +19,6 @@ public class VirtualDirectory extends FileSystemNode {
         children.remove(node);
     }
 
-    // Busca filho pelo nome
     public FileSystemNode getChild(String name) {
         for (FileSystemNode node : children) {
             if (node.getName().equals(name)) {

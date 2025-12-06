@@ -19,8 +19,6 @@ public class ShellInterface {
             String commandLine = scanner.nextLine().trim();
             if (commandLine.isEmpty()) continue;
 
-            // Divide por espaços, mas limita a 3 partes para comandos como 'cp a b'
-            // O regex "\\s+" trata múltiplos espaços como um só (evita erros de digitação)
             String[] parts = commandLine.split("\\s+", 3);
             String command = parts[0].toLowerCase();
             String arg1 = parts.length > 1 ? parts[1] : null;
@@ -40,12 +38,12 @@ public class ShellInterface {
     private void processCommand(String command, String arg1, String arg2) {
         switch (command) {
             case "help":
-            case "?": // Alias comum para help
+            case "?":
                 showHelp();
                 break;
 
             case "ls":
-            case "dir": // Alias para usuários de Windows
+            case "dir":
                 fs.ls();
                 break;
 
@@ -55,7 +53,7 @@ public class ShellInterface {
                 break;
 
             case "mkfile":
-            case "touch": // Alias comum em Unix
+            case "touch":
                 if (arg1 != null) fs.mkfile(arg1);
                 else printError("Uso: mkfile <nome_arquivo>");
                 break;
@@ -86,7 +84,6 @@ public class ShellInterface {
 
             case "cls":
             case "clear":
-                // Simula limpeza de tela pulando linhas
                 for (int i = 0; i < 50; i++) System.out.println();
                 break;
 

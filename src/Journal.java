@@ -9,7 +9,6 @@ public class Journal {
     public void log(String operation, String target, String status) {
         try (PrintWriter out = new PrintWriter(new FileWriter(LOG_FILE, true))) {
             String timestamp = LocalDateTime.now().toString();
-            // Formato: [DATA] [OPERACAO] [ALVO] - [STATUS]
             out.printf("[%s] [%s] %s - %s%n", timestamp, operation, target, status);
         } catch (IOException e) {
             System.err.println("Erro crítico: Falha ao escrever no Journal.");
